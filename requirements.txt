@@ -1,0 +1,6 @@
+psycopg2-binary
+websocket-client
+fastapi
+uvicorn
+streamlit
+requests

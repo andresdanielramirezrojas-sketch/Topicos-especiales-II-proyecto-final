@@ -1,0 +1,10 @@
+blocks:
+  - name: scraper
+    type: python
+    path: ./scraper/scraper.py
+  - name: transform
+    type: python
+    path: ./mage/transform.py
+  - name: load
+    type: python
+    path: load_postgis.py
