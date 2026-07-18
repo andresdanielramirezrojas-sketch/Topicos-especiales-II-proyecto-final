@@ -1,59 +1,86 @@
 version: "3.9"
 
 services:
+
   db:
     image: postgis/postgis:15-3.3
     container_name: postgres-marinetraffic
+
+    restart: always
+
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin
-      - POSTGRES_DB=marinetraffic
+      POSTGRES_DB: marinetraffic
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+
     ports:
       - "5432:5432"
+
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: always
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d marinetraffic"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  scraper:
-    build:
-      context: .
-      dockerfile: scraper/Dockerfile
-    container_name: marinetraffic-scraper
+
+  mage:
+    build: ./mage
+    container_name: mage-ai
+
+    ports:
+      - "6789:6789"
+
+    volumes:
+      - ./mage:/home/src
+
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      - API_KEY=715ac72120c93dffc9e09022e49e16ea14921b4d
-    command: python scraper.py
 
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: marinetraffic
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+
+    command: mage start marinetraffic
 
   api:
-    build:
-      context: .
-      dockerfile: api/Dockerfile
+
+    build: ./api
+
     container_name: fastapi-service
-    depends_on:
-      - db
-    command: uvicorn api:app --host 0.0.0.0 --port 8000
+
     ports:
       - "8000:8000"
 
-  streamlit:
-    build:
-      context: .
-      dockerfile: streamlit/Dockerfile
-    container_name: streamlit-dashboard
     depends_on:
-      - api
-    command: streamlit run dashboard.py --server.port=8501
+      db:
+        condition: service_healthy
+
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: marinetraffic
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+
+
+  dashboard:
+
+    build: ./dashboard
+
+    container_name: streamlit-dashboard
+
     ports:
       - "8501:8501"
 
+    depends_on:
+      - api
+
 volumes:
-  pgdata:
+
+  postgres_data:

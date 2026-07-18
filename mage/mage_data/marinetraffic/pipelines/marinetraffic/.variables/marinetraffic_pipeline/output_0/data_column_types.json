@@ -1,0 +1,1 @@
+{"mmsi": "int64", "latitude": "float64", "longitude": "float64", "speed": "float64", "course": "float64", "timestamp": "str"}

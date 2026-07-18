@@ -1,0 +1,13 @@
+pandas
+
+geopandas
+
+sqlalchemy
+
+psycopg2-binary
+
+websocket-client
+
+requests
+
+shapely
